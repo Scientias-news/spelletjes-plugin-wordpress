@@ -751,3 +751,58 @@
   #scsp-wrapper .element-symbol { font-size: 2.5rem; }
   #scsp-wrapper .feit-fabel-buttons { gap: 0.75rem; }
 }
+
+/* ============================================================
+   OTHER EDITIONS — resultatenscerm
+   ============================================================ */
+
+#scsp-wrapper .other-editions {
+  margin-top: 2rem;
+  width: 100%;
+  max-width: 480px;
+}
+
+#scsp-wrapper .other-editions-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+#scsp-wrapper .other-editions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+#scsp-wrapper .other-edition-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: 'Space Grotesk', sans-serif;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+#scsp-wrapper .other-edition-card:hover {
+  border-color: var(--cyan);
+  background: rgba(6,182,212,0.07);
+}
+
+#scsp-wrapper .other-edition-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+#scsp-wrapper .other-edition-title {
+  flex: 1;
+  font-weight: 600;
+}

@@ -578,6 +578,17 @@ function showResults(game, score, max, details) {
       <button class="btn-results primary" id="results-replay-btn">Opnieuw spelen</button>
       <button class="btn-results secondary" id="results-home-btn">Andere spellen</button>
     </div>
+
+    ${(function() {
+      const others = window.scspEditionData && window.scspEditionData.otherEditions;
+      if (!others || !others.length) return '';
+      const cards = others.map(e => `
+        <a class="other-edition-card" href="${e.url}">
+          <span class="other-edition-icon">${e.icon}</span>
+          <span class="other-edition-title">${e.title}</span>
+        </a>`).join('');
+      return `<div class="other-editions"><p class="other-editions-label">Meer spellen bij Scientias</p><div class="other-editions-grid">${cards}</div></div>`;
+    })()}
   `;
 
   getEl('results-replay-btn').addEventListener('click', () => startGame(game));
