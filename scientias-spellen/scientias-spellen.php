@@ -500,11 +500,34 @@ function scsp_shortcode( $atts ) {
             $game_type = get_post_meta( $ep->ID, '_scsp_game_type', true ) ?: 'quiz';
             $questions = json_decode( get_post_meta( $ep->ID, '_scsp_questions', true ) ?: '[]', true );
 
+            // ---- Fetch up to 3 other published editions (random) ----------------
+            $other_posts = get_posts( [
+                'post_type'      => 'scsp_editie',
+                'post_status'    => 'publish',
+                'posts_per_page' => -1,
+                'exclude'        => [ $ep->ID ],
+                'orderby'        => 'rand',
+                'fields'         => 'ids',
+            ] );
+            $other_ids      = array_slice( $other_posts, 0, 3 );
+            $other_editions = [];
+            $type_icons     = [ 'quiz' => '🧪', 'feit' => '🔬', 'elementen' => '⚗️' ];
+            foreach ( $other_ids as $oid ) {
+                $o_type           = get_post_meta( $oid, '_scsp_game_type', true ) ?: 'quiz';
+                $other_editions[] = [
+                    'title' => get_the_title( $oid ),
+                    'type'  => $o_type,
+                    'icon'  => $type_icons[ $o_type ] ?? '🎮',
+                    'url'   => get_permalink( $oid ),
+                ];
+            }
+
             $edition_data = [
-                'type'      => $game_type,
-                'title'     => $ep->post_title,
-                'subtitle'  => 'Speciaal samengesteld bij dit artikel',
-                'questions' => is_array( $questions ) ? $questions : [],
+                'type'          => $game_type,
+                'title'         => $ep->post_title,
+                'subtitle'      => 'Speciaal samengesteld bij dit artikel',
+                'questions'     => is_array( $questions ) ? $questions : [],
+                'otherEditions' => $other_editions,
             ];
             $active_games = [ $game_type ]; // only show this game
         }
