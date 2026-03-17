@@ -1,0 +1,310 @@
+/* ============================================================
+   SCIENTIAS SPELLEN — Admin vragenbuilder stijlen
+   ============================================================ */
+
+/* ---- Builder wrapper ---- */
+#scsp-builder-wrap {
+  padding: 4px 0;
+}
+
+#scsp-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+/* ---- Empty state ---- */
+.scsp-empty {
+  color: #777;
+  font-style: italic;
+  padding: 20px 0 8px;
+}
+
+/* ---- Question / Statement card ---- */
+.scsp-q-card {
+  border: 1px solid #c3c4c7;
+  border-left: 4px solid #0073aa;
+  border-radius: 4px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.scsp-q-card.feit-card {
+  border-left-color: #7c3aed;
+}
+
+/* ---- Card header ---- */
+.scsp-q-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f6f7f7;
+  border-bottom: 1px solid #e5e5e5;
+  cursor: pointer;
+  user-select: none;
+}
+
+.scsp-q-num {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1d2327;
+}
+
+.scsp-q-toggle {
+  font-size: 11px;
+  color: #777;
+  margin-left: 8px;
+}
+
+.scsp-q-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.scsp-q-actions button {
+  padding: 3px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 3px;
+  border: 1px solid #c3c4c7;
+  background: #fff;
+  color: #444;
+  line-height: 1.4;
+}
+
+.scsp-q-actions button:hover {
+  background: #f0f0f1;
+}
+
+.scsp-q-actions .scsp-delete-btn {
+  color: #d63638;
+  border-color: #d63638;
+}
+
+.scsp-q-actions .scsp-delete-btn:hover {
+  background: #fcebeb;
+}
+
+.scsp-q-actions .scsp-up-btn,
+.scsp-q-actions .scsp-down-btn {
+  color: #2271b1;
+}
+
+/* ---- Card body ---- */
+.scsp-q-body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.scsp-q-body.collapsed {
+  display: none;
+}
+
+/* ---- Field rows ---- */
+.scsp-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scsp-row-inline {
+  flex-direction: row;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.scsp-row label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1d2327;
+}
+
+.scsp-row input[type="text"],
+.scsp-row textarea {
+  width: 100%;
+  font-size: 13px;
+  padding: 6px 8px;
+  border: 1px solid #c3c4c7;
+  border-radius: 3px;
+  line-height: 1.5;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.scsp-row input[type="text"]:focus,
+.scsp-row textarea:focus {
+  border-color: #2271b1;
+  outline: 2px solid transparent;
+  box-shadow: 0 0 0 1px #2271b1;
+}
+
+.scsp-hint {
+  font-weight: 400;
+  color: #888;
+}
+
+.scsp-required {
+  color: #d63638;
+}
+
+/* ---- Answer options (quiz) ---- */
+.scsp-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scsp-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scsp-opt input[type="radio"] {
+  margin: 0;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.scsp-opt-letter {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f0f0f1;
+  border: 1px solid #c3c4c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  color: #444;
+}
+
+.scsp-opt input[type="radio"]:checked ~ .scsp-opt-letter {
+  background: #0073aa;
+  color: #fff;
+  border-color: #0073aa;
+}
+
+.scsp-opt input[type="text"] {
+  flex: 1;
+}
+
+/* ---- Radio group (feit/fabel) ---- */
+.scsp-radio-group {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.scsp-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 2px solid #c3c4c7;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.scsp-radio-label.scsp-feit:has(input:checked) {
+  border-color: #00a32a;
+  background: #f0fdf4;
+  color: #00a32a;
+}
+
+.scsp-radio-label.scsp-fabel:has(input:checked) {
+  border-color: #d63638;
+  background: #fef2f2;
+  color: #d63638;
+}
+
+.scsp-radio-label input[type="radio"] {
+  margin: 0;
+}
+
+/* ---- Toolbar ---- */
+.scsp-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.scsp-toolbar .button {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* ---- Count hint ---- */
+#scsp-count-hint {
+  color: #888;
+  font-size: 12px;
+}
+
+/* ---- Sample format panel ---- */
+.scsp-sample-inner {
+  background: #f6f7f7;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 12px 14px;
+}
+
+.scsp-sample-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.scsp-stab {
+  padding: 4px 12px;
+  font-size: 12px;
+  border: 1px solid #c3c4c7;
+  background: #fff;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.scsp-stab.active {
+  background: #0073aa;
+  color: #fff;
+  border-color: #0073aa;
+}
+
+.scsp-sample-code {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* ---- Admin column shortcode ---- */
+.column-scsp_shortcode {
+  width: 280px;
+}
+
+/* ---- Icon input ---- */
+.scsp-icon-input {
+  width: 60px !important;
+  text-align: center;
+  font-size: 1.4rem !important;
+}
