@@ -1,0 +1,379 @@
+diff -ruN scientias-spellen2_orig/scientias-spellen/admin/admin.js scientias-spellen2_work/scientias-spellen/admin/admin.js
+--- scientias-spellen2_orig/scientias-spellen/admin/admin.js	2026-03-17 17:12:41.000000000 +0000
++++ scientias-spellen2_work/scientias-spellen/admin/admin.js	2026-03-17 17:36:45.929936726 +0000
+@@ -364,6 +364,7 @@
+     if (!file) return;
+ 
+     const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
++    const MAX_ITEMS = 100;
+     if (file.size > MAX_SIZE) {
+       showFeedback('error', 'Bestand te groot. Maximum bestandsgrootte is 5 MB.');
+       e.target.value = '';
+@@ -380,6 +381,11 @@
+           return;
+         }
+ 
++        if (data.length > MAX_ITEMS) {
++          showFeedback('error', 'Te veel items in dit bestand. Maximum is ' + MAX_ITEMS + '.');
++          return;
++        }
++
+         const type       = gameType();
+         const validation = validateImport(data, type);
+         if (!validation.ok) {
+@@ -420,9 +426,10 @@
+ 
+         renderAll();
+         updateCountHint();
+-        showFeedback('success',
++        showFeedback(
++          'success',
+           normalized.length + ' ' + (type === 'quiz' ? 'vragen' : 'uitspraken') +
+-          ' succesvol geïmporteerd uit <em>' + esc(file.name) + '</em>.'
++          ' succesvol geïmporteerd uit "' + file.name + '".'
+         );
+ 
+       } catch (err) {
+@@ -479,7 +486,7 @@
+ 
+   // ---- FEEDBACK BANNER -----------------------------------------------------
+ 
+-  function showFeedback(type, html) {
++  function showFeedback(type, message) {
+     const el = document.getElementById('scsp-import-feedback');
+     if (!el) return;
+     const colors = {
+@@ -487,13 +494,20 @@
+       error:   { bg: '#fef2f2', border: '#fca5a5', color: '#991b1b' },
+     };
+     const c = colors[type] || colors.error;
+-    el.innerHTML = `<div style="
+-        padding:8px 12px;border-radius:4px;font-size:13px;
+-        background:${c.bg};border:1px solid ${c.border};color:${c.color}
+-      ">${html}</div>`;
++
++    const box = document.createElement('div');
++    box.style.padding = '8px 12px';
++    box.style.borderRadius = '4px';
++    box.style.fontSize = '13px';
++    box.style.background = c.bg;
++    box.style.border = '1px solid ' + c.border;
++    box.style.color = c.color;
++    box.textContent = String(message || '');
++
++    el.replaceChildren(box);
+ 
+     // Auto-hide after 6 seconds
+-    setTimeout(() => { if (el) el.innerHTML = ''; }, 6000);
++    setTimeout(() => { if (el) el.replaceChildren(); }, 6000);
+   }
+ 
+   // ---- SAMPLE FORMAT PANEL -------------------------------------------------
+diff -ruN scientias-spellen2_orig/scientias-spellen/assets/games.js scientias-spellen2_work/scientias-spellen/assets/games.js
+--- scientias-spellen2_orig/scientias-spellen/assets/games.js	2026-03-17 17:13:41.000000000 +0000
++++ scientias-spellen2_work/scientias-spellen/assets/games.js	2026-03-17 17:36:45.931262435 +0000
+@@ -395,11 +395,6 @@
+     .replace(/'/g, '&#039;');
+ }
+ 
+-/* Strip HTML tags but keep emoji and other Unicode intact */
+-function stripTags(s) {
+-  return String(s).replace(/<[^>]*>/g, '');
+-}
+-
+ function shuffle(arr) {
+   const a = [...arr];
+   for (let i = a.length - 1; i > 0; i--) {
+@@ -705,7 +700,7 @@
+ 
+   getEl('feit-content').innerHTML = `
+     <div class="statement-card">
+-      <div class="statement-icon">${stripTags(item.icon)}</div>
++      <div class="statement-icon">${escHtml(item.icon || '🔬')}</div>
+       <div class="statement-text">"${escHtml(item.statement)}"</div>
+     </div>
+     <div class="feit-fabel-buttons">
+diff -ruN scientias-spellen2_orig/scientias-spellen/scientias-spellen.php scientias-spellen2_work/scientias-spellen/scientias-spellen.php
+--- scientias-spellen2_orig/scientias-spellen/scientias-spellen.php	2026-03-17 17:12:28.000000000 +0000
++++ scientias-spellen2_work/scientias-spellen/scientias-spellen.php	2026-03-17 17:37:41.813016822 +0000
+@@ -3,7 +3,7 @@
+  * Plugin Name:  Scientias Spellen
+  * Plugin URI:   https://scientias.nl
+  * Description:  Interactieve wetenschapsspellen — maak edities per artikel via de beheerpagina.
+- * Version:      2.0.1
++ * Version:      2.0.2
+  * Author:       Scientias.nl
+  * Text Domain:  scientias-spellen
+  * Requires PHP: 7.4
+@@ -11,10 +11,201 @@
+ 
+ if ( ! defined( 'ABSPATH' ) ) exit;
+ 
+-define( 'SCSP_VERSION', '2.0.1' );
++define( 'SCSP_VERSION', '2.0.2' );
+ define( 'SCSP_DIR',     plugin_dir_path( __FILE__ ) );
+ define( 'SCSP_URL',     plugin_dir_url( __FILE__ ) );
+ 
++define( 'SCSP_MAX_IMPORT_BYTES', 5 * 1024 * 1024 );
++define( 'SCSP_MAX_QUESTIONS', 100 );
++define( 'SCSP_MAX_TEXT_LENGTH', 500 );
++define( 'SCSP_MAX_EXPLANATION_LENGTH', 2000 );
++
++register_activation_hook( __FILE__, 'scsp_activate_plugin' );
++register_deactivation_hook( __FILE__, 'scsp_deactivate_plugin' );
++add_action( 'init', 'scsp_maybe_upgrade' );
++
++function scsp_get_capabilities() {
++    return [
++        'edit_post'              => 'edit_scsp_editie',
++        'read_post'              => 'read_scsp_editie',
++        'delete_post'            => 'delete_scsp_editie',
++        'edit_posts'             => 'edit_scsp_edities',
++        'edit_others_posts'      => 'edit_others_scsp_edities',
++        'publish_posts'          => 'publish_scsp_edities',
++        'read_private_posts'     => 'read_private_scsp_edities',
++        'delete_posts'           => 'delete_scsp_edities',
++        'delete_private_posts'   => 'delete_private_scsp_edities',
++        'delete_published_posts' => 'delete_published_scsp_edities',
++        'delete_others_posts'    => 'delete_others_scsp_edities',
++        'edit_private_posts'     => 'edit_private_scsp_edities',
++        'edit_published_posts'   => 'edit_published_scsp_edities',
++        'create_posts'           => 'edit_scsp_edities',
++    ];
++}
++
++function scsp_add_role_caps() {
++    $caps = array_unique( array_values( scsp_get_capabilities() ) );
++    foreach ( [ 'administrator', 'editor' ] as $role_name ) {
++        $role = get_role( $role_name );
++        if ( ! $role ) {
++            continue;
++        }
++
++        foreach ( $caps as $cap ) {
++            $role->add_cap( $cap );
++        }
++    }
++}
++
++function scsp_remove_role_caps() {
++    $caps = array_unique( array_values( scsp_get_capabilities() ) );
++    foreach ( [ 'administrator', 'editor' ] as $role_name ) {
++        $role = get_role( $role_name );
++        if ( ! $role ) {
++            continue;
++        }
++
++        foreach ( $caps as $cap ) {
++            $role->remove_cap( $cap );
++        }
++    }
++}
++
++function scsp_activate_plugin() {
++    scsp_register_cpt();
++    scsp_add_role_caps();
++    update_option( 'scsp_version', SCSP_VERSION );
++    flush_rewrite_rules();
++}
++
++function scsp_deactivate_plugin() {
++    scsp_remove_role_caps();
++    flush_rewrite_rules();
++}
++
++function scsp_maybe_upgrade() {
++    if ( get_option( 'scsp_version' ) === SCSP_VERSION ) {
++        return;
++    }
++
++    scsp_add_role_caps();
++    update_option( 'scsp_version', SCSP_VERSION );
++}
++
++function scsp_limit_text( $value, $max_length = SCSP_MAX_TEXT_LENGTH ) {
++    $value = is_scalar( $value ) ? (string) $value : '';
++    $value = sanitize_text_field( $value );
++    if ( function_exists( 'mb_substr' ) ) {
++        return mb_substr( $value, 0, $max_length );
++    }
++
++    return substr( $value, 0, $max_length );
++}
++
++function scsp_limit_textarea( $value, $max_length = SCSP_MAX_EXPLANATION_LENGTH ) {
++    $value = is_scalar( $value ) ? (string) $value : '';
++    $value = sanitize_textarea_field( $value );
++    if ( function_exists( 'mb_substr' ) ) {
++        return mb_substr( $value, 0, $max_length );
++    }
++
++    return substr( $value, 0, $max_length );
++}
++
++function scsp_sanitize_icon( $value ) {
++    $icon = scsp_limit_text( $value, 20 );
++    return $icon !== '' ? $icon : '🔬';
++}
++
++function scsp_validate_and_sanitize_questions( $raw, $type ) {
++    if ( ! is_string( $raw ) ) {
++        return new WP_Error( 'invalid_payload', 'Ongeldige payload ontvangen.' );
++    }
++
++    if ( strlen( $raw ) > SCSP_MAX_IMPORT_BYTES ) {
++        return new WP_Error( 'payload_too_large', 'De ingevoerde JSON is groter dan 5 MB.' );
++    }
++
++    $decoded = json_decode( $raw, true );
++    if ( ! is_array( $decoded ) ) {
++        return new WP_Error( 'invalid_json', 'De ingevoerde JSON bevat geen geldige array.' );
++    }
++
++    if ( count( $decoded ) > SCSP_MAX_QUESTIONS ) {
++        return new WP_Error( 'too_many_questions', sprintf( 'Maximaal %d items toegestaan per editie.', SCSP_MAX_QUESTIONS ) );
++    }
++
++    $clean = [];
++
++    foreach ( $decoded as $item ) {
++        if ( ! is_array( $item ) ) {
++            continue;
++        }
++
++        if ( $type === 'quiz' ) {
++            $options = array_values( array_slice( (array) ( $item['options'] ?? [] ), 0, 4 ) );
++            $options = array_map( static function( $option ) {
++                return scsp_limit_text( $option );
++            }, $options );
++
++            while ( count( $options ) < 4 ) {
++                $options[] = '';
++            }
++
++            $clean[] = [
++                'category'    => scsp_limit_text( $item['category'] ?? '' ),
++                'question'    => scsp_limit_textarea( $item['question'] ?? '', 1000 ),
++                'options'     => $options,
++                'correct'     => max( 0, min( 3, intval( $item['correct'] ?? 0 ) ) ),
++                'explanation' => scsp_limit_textarea( $item['explanation'] ?? '' ),
++            ];
++        } else {
++            $clean[] = [
++                'icon'        => scsp_sanitize_icon( $item['icon'] ?? '🔬' ),
++                'statement'   => scsp_limit_textarea( $item['statement'] ?? '', 1000 ),
++                'answer'      => wp_validate_boolean( $item['answer'] ?? true ),
++                'explanation' => scsp_limit_textarea( $item['explanation'] ?? '' ),
++            ];
++        }
++    }
++
++    return $clean;
++}
++
++function scsp_set_admin_notice( $post_id, $message, $type = 'error' ) {
++    if ( $post_id <= 0 || $message === '' ) {
++        return;
++    }
++
++    set_transient( 'scsp_notice_' . absint( $post_id ) . '_' . get_current_user_id(), [
++        'message' => sanitize_text_field( $message ),
++        'type'    => $type === 'success' ? 'success' : 'error',
++    ], MINUTE_IN_SECONDS );
++}
++
++add_action( 'admin_notices', 'scsp_render_admin_notice' );
++function scsp_render_admin_notice() {
++    $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
++    if ( ! $screen || $screen->post_type !== 'scsp_editie' ) {
++        return;
++    }
++
++    $post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
++    if ( $post_id <= 0 ) {
++        return;
++    }
++
++    $key = 'scsp_notice_' . $post_id . '_' . get_current_user_id();
++    $notice = get_transient( $key );
++    if ( ! is_array( $notice ) || empty( $notice['message'] ) ) {
++        return;
++    }
++
++    delete_transient( $key );
++    $class = ! empty( $notice['type'] ) && $notice['type'] === 'success' ? 'notice-success' : 'notice-error';
++    echo '<div class="notice ' . esc_attr( $class ) . ' is-dismissible"><p>' . esc_html( $notice['message'] ) . '</p></div>';
++}
++
+ // =============================================================================
+ // 1. CUSTOM POST TYPE  —  Spel Edities
+ // =============================================================================
+@@ -35,13 +226,16 @@
+             'not_found'          => 'Geen edities gevonden.',
+             'not_found_in_trash' => 'Geen edities in de prullenbak.',
+         ],
+-        'public'       => false,
+-        'show_ui'      => true,
+-        'show_in_menu' => true,
+-        'menu_icon'    => 'dashicons-games',
+-        'menu_position'=> 25,
+-        'supports'     => [ 'title' ],
+-        'has_archive'  => false,
++        'public'          => false,
++        'show_ui'         => true,
++        'show_in_menu'    => true,
++        'menu_icon'       => 'dashicons-games',
++        'menu_position'   => 25,
++        'supports'        => [ 'title' ],
++        'has_archive'     => false,
++        'map_meta_cap'    => true,
++        'capability_type' => [ 'scsp_editie', 'scsp_edities' ],
++        'capabilities'    => scsp_get_capabilities(),
+     ] );
+ }
+ 
+@@ -219,6 +413,7 @@
+     if ( ! isset( $_POST['scsp_nonce'] ) ) return;
+     if ( ! wp_verify_nonce( $_POST['scsp_nonce'], 'scsp_save_' . $post_id ) ) return;
+     if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
++    if ( wp_is_post_revision( $post_id ) ) return;
+     if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+ 
+     // Game type
+@@ -229,29 +424,14 @@
+ 
+     // Questions JSON — validate before saving
+     $raw = wp_unslash( $_POST['scsp_questions_json'] ?? '[]' );
+-    $decoded = json_decode( $raw, true );
+-    if ( is_array( $decoded ) ) {
+-        // Sanitize each question
+-        $clean = array_map( function( $q ) use ( $type ) {
+-            if ( $type === 'quiz' ) {
+-                return [
+-                    'category'    => sanitize_text_field( $q['category']    ?? '' ),
+-                    'question'    => sanitize_textarea_field( $q['question']    ?? '' ),
+-                    'options'     => array_map( 'sanitize_text_field', array_slice( (array)( $q['options'] ?? [] ), 0, 4 ) ),
+-                    'correct'     => max( 0, min( 3, intval( $q['correct'] ?? 0 ) ) ),
+-                    'explanation' => sanitize_textarea_field( $q['explanation'] ?? '' ),
+-                ];
+-            } else {
+-                return [
+-                    'icon'        => sanitize_text_field( $q['icon']        ?? '🔬' ),
+-                    'statement'   => sanitize_textarea_field( $q['statement']   ?? '' ),
+-                    'answer'      => (bool)( $q['answer'] ?? true ),
+-                    'explanation' => sanitize_textarea_field( $q['explanation'] ?? '' ),
+-                ];
+-            }
+-        }, $decoded );
+-        update_post_meta( $post_id, '_scsp_questions', wp_json_encode( $clean, JSON_UNESCAPED_UNICODE ) );
++    $clean = scsp_validate_and_sanitize_questions( $raw, $type );
++
++    if ( is_wp_error( $clean ) ) {
++        scsp_set_admin_notice( $post_id, $clean->get_error_message() );
++        return;
+     }
++
++    update_post_meta( $post_id, '_scsp_questions', wp_json_encode( $clean, JSON_UNESCAPED_UNICODE ) );
+ }
+ 
+ // =============================================================================

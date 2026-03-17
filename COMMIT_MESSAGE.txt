@@ -1,0 +1,8 @@
+chore: harden Scientias Spellen plugin for safer imports and stricter capabilities
+
+- add dedicated CPT capabilities for scsp_editie
+- grant capabilities to administrators and editors
+- add upgrade path for existing installs
+- enforce server-side import limits and stricter sanitization
+- harden admin feedback rendering and frontend icon escaping
+- bump plugin version to 2.0.2
