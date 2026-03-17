@@ -431,7 +431,7 @@ function scsp_save_post( $post_id, $post ) {
         return;
     }
 
-    update_post_meta( $post_id, '_scsp_questions', wp_json_encode( $clean, JSON_UNESCAPED_UNICODE ) );
+    update_post_meta( $post_id, '_scsp_questions', wp_json_encode( $clean, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG ) );
 }
 
 // =============================================================================
@@ -514,7 +514,7 @@ function scsp_shortcode( $atts ) {
     if ( $edition_data !== null ) {
         wp_add_inline_script(
             'scientias-spellen-script',
-            'window.scspEditionData = ' . wp_json_encode( $edition_data, JSON_UNESCAPED_UNICODE ) . ';',
+            'window.scspEditionData = ' . wp_json_encode( $edition_data, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG ) . ';',
             'before'
         );
     }
