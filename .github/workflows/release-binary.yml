@@ -44,13 +44,14 @@ jobs:
           zip -r "../${ZIP_NAME}" .
 
       - name: Upload ZIP as release asset
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.meta.outputs.tag }}
           files: scientias-spellen-${{ steps.meta.outputs.tag }}.zip
 
       - name: Upload ZIP as workflow artifact
-        if: github.event_name != 'release'
+        if: github.event_name != 'release' && github.event.inputs.tag == ''
         uses: actions/upload-artifact@v4
         with:
           name: scientias-spellen-${{ steps.meta.outputs.tag }}
