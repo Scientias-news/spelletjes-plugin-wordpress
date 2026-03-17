@@ -1,0 +1,57 @@
+name: Build release binary
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to use in the ZIP filename (optional when triggered from a release)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine release tag
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+          else
+            TAG="${{ github.event.inputs.tag }}"
+          fi
+
+          if [ -z "$TAG" ]; then
+            TAG="manual-${{ github.run_number }}"
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Build plugin ZIP
+        run: |
+          VERSION="${{ steps.meta.outputs.tag }}"
+          ZIP_NAME="scientias-spellen-${VERSION}.zip"
+          cd scientias-spellen
+          zip -r "../${ZIP_NAME}" .
+
+      - name: Upload ZIP as release asset
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: scientias-spellen-${{ steps.meta.outputs.tag }}.zip
+
+      - name: Upload ZIP as workflow artifact
+        if: github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: scientias-spellen-${{ steps.meta.outputs.tag }}
+          path: scientias-spellen-${{ steps.meta.outputs.tag }}.zip
