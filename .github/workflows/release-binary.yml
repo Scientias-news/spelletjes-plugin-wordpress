@@ -3,15 +3,21 @@ name: Build release binary
 on:
   release:
     types: [published]
+  push:
+    tags:
+      - '*'
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to use in the ZIP filename (optional when triggered from a release)'
+        description: 'Tag to use in the ZIP filename (optional when triggered manually)'
         required: false
         type: string
 
 permissions:
   contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   build-and-upload:
@@ -19,13 +25,15 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Determine release tag
         id: meta
         run: |
           if [ "${{ github.event_name }}" = "release" ]; then
             TAG="${{ github.event.release.tag_name }}"
+          elif [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG="${{ github.ref_name }}"
           else
             TAG="${{ github.event.inputs.tag }}"
           fi
@@ -44,15 +52,16 @@ jobs:
           zip -r "../${ZIP_NAME}" .
 
       - name: Upload ZIP as release asset
-        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '')
+        if: github.event_name == 'release' || (github.event_name == 'push' && github.ref_type == 'tag') || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
           files: scientias-spellen-${{ steps.meta.outputs.tag }}.zip
+          overwrite_files: true
 
       - name: Upload ZIP as workflow artifact
-        if: github.event_name != 'release' && github.event.inputs.tag == ''
-        uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.tag == ''
+        uses: actions/upload-artifact@v5
         with:
           name: scientias-spellen-${{ steps.meta.outputs.tag }}
           path: scientias-spellen-${{ steps.meta.outputs.tag }}.zip
