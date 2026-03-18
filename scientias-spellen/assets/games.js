@@ -414,7 +414,11 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = getEl('screen-' + id);
   if (el) el.classList.add('active');
-  window.scrollTo(0, 0);
+  const wrapper = document.getElementById('scsp-wrapper');
+  if (wrapper) {
+    const top = wrapper.getBoundingClientRect().top + window.scrollY - 16;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
 }
 
 // ==========================================
