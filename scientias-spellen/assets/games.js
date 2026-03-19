@@ -581,19 +581,6 @@ function showResults(game, score, max, details) {
     <div class="results-actions">
       <button class="btn-results primary" id="results-replay-btn">Opnieuw spelen</button>
     </div>
-
-    ${(function() {
-      const others = window.scspEditionData && window.scspEditionData.otherEditions;
-      if (!others || !others.length) return '';
-      const cards = others
-        .filter(e => /^https?:\/\//.test(e.url))
-        .map(e => `
-        <a class="other-edition-card" href="${escHtml(e.url)}">
-          <span class="other-edition-icon">${escHtml(e.icon)}</span>
-          <span class="other-edition-title">${escHtml(e.title)}</span>
-        </a>`).join('');
-      return `<div class="other-editions"><p class="other-editions-label">Meer spellen bij Scientias</p><div class="other-editions-grid">${cards}</div></div>`;
-    })()}
   `;
 
   getEl('results-replay-btn').addEventListener('click', () => startGame(game));
