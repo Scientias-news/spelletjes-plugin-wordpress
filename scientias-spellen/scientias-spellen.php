@@ -501,6 +501,7 @@ function scsp_shortcode( $atts ) {
             $questions = json_decode( get_post_meta( $ep->ID, '_scsp_questions', true ) ?: '[]', true );
 
             // ---- Fetch up to 3 other published editions (random) ----------------
+            global $wpdb;
             $other_posts = get_posts( [
                 'post_type'      => 'scsp_editie',
                 'post_status'    => 'publish',
@@ -513,12 +514,22 @@ function scsp_shortcode( $atts ) {
             $other_editions = [];
             $type_icons     = [ 'quiz' => '🧪', 'feit' => '🔬', 'elementen' => '⚗️' ];
             foreach ( $other_ids as $oid ) {
+                $o_slug = get_post_field( 'post_name', $oid );
+                $page = $wpdb->get_row( $wpdb->prepare(
+                    "SELECT ID FROM {$wpdb->posts}
+                     WHERE post_status = 'publish'
+                       AND post_type IN ('post','page')
+                       AND post_content LIKE %s
+                     LIMIT 1",
+                    '%[scientias_spellen editie="' . $wpdb->esc_like( $o_slug ) . '"%'
+                ) );
+                if ( ! $page ) continue;
                 $o_type           = get_post_meta( $oid, '_scsp_game_type', true ) ?: 'quiz';
                 $other_editions[] = [
                     'title' => get_the_title( $oid ),
                     'type'  => $o_type,
                     'icon'  => $type_icons[ $o_type ] ?? '🎮',
-                    'url'   => get_permalink( $oid ),
+                    'url'   => get_permalink( $page->ID ),
                 ];
             }
 
