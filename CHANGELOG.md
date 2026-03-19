@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.0.3
+
+### Eindscherm vereenvoudigd
+- Alle verwijzingen naar andere spellen verwijderd van het eindscherm ("Andere spellen", "Meer spellen bij Scientias", willekeurige edities-kaartjes).
+- Eindscherm toont nu uitsluitend de knop **Opnieuw spelen**.
+- Geen externe links meer → geen risico op 404-pagina's.
+- Beveiligingsaudit uitgevoerd: geen kwetsbaarheden aangetroffen.
+
+---
+
 ## 2.0.2
 
 Deze update bevat meerdere beveiligings- en hardeningverbeteringen voor de plugin.

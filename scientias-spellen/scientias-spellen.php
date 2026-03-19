@@ -3,7 +3,7 @@
  * Plugin Name:  Scientias Spellen
  * Plugin URI:   https://scientias.nl
  * Description:  Interactieve wetenschapsspellen — maak edities per artikel via de beheerpagina.
- * Version:      2.0.2
+ * Version:      2.0.3
  * Author:       Scientias.nl
  * Text Domain:  scientias-spellen
  * Requires PHP: 7.4
@@ -11,7 +11,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'SCSP_VERSION', '2.0.2' );
+define( 'SCSP_VERSION', '2.0.3' );
 define( 'SCSP_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'SCSP_URL',     plugin_dir_url( __FILE__ ) );
 
